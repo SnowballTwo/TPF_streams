@@ -1,0 +1,42 @@
+function data()
+return {
+	boundingInfo = {
+		bbMax = { 1.0, 1.0, 0.0, },
+		bbMin = { 0.0, 0.0, 0.0, },
+	},
+	collider = {
+		params = {
+			
+		},
+		type = "MESH",
+	},
+	lods = {
+		{
+			children = {
+				{
+					id = "asset/snowball_streamer_water_1.msh",
+					transf = {
+						0.254, 0.0, 0.0, 0.0, 0.0, 0.254, 0.0, 0.0, 0.0, 0.0, 0.254, 0.0, 0.0, 0.0, 0.0, 1.0, 
+					},
+					type = "MESH",
+				}, 
+			},
+			matConfigs = {
+				{ 0, }, 
+			},
+			static = false,
+			visibleFrom = 0,
+			visibleTo = 100000,
+		}, 
+	},
+	metadata = {
+		availability = {
+			yearFrom = 0,
+			yearTo = 0,
+		},
+		cost = {
+			price = 0,
+		},
+	},
+}
+end

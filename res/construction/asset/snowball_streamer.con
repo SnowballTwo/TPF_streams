@@ -1,0 +1,234 @@
+local vec2 = require "snowball_streamer_vec2"
+local polygon = require "snowball_streamer_polygon"
+local streamer = require "snowball_streamer"
+
+local depths = {2, 4, 6, 8, 10, 12, 16, 24}
+local modes = {"plan", "dig", "reset"}
+local flow = {"angular", "smooth"}
+
+function data()
+    return {
+        type = "ASSET_DEFAULT",
+        buildMode = "MULTI",
+        categories = {"tree"},
+        availability = {
+            yearFrom = 0,
+            yearTo = 0
+        },
+        description = {
+            name = _("title"),
+            description = _("description")
+        },
+        order = 197720301,
+        skipCollision = true,
+        autoRemovable = false,
+        params = {
+            {
+                key = "mode",
+                name = _("mode"),
+                values = {_("plan"), _("dig"), _("reset")},
+                defaultIndex = 0
+            },
+            {
+                key = "width",
+                name = _("width"),
+                values = {"0", "1", "2", "3", "4", "5", "6", "7", "8", "9"},
+                defaultIndex = 6
+            },
+            {
+                key = "width_10",
+                name = _("width_10"),
+                values = {"0", "1", "2", "3", "4", "5", "6", "7", "8", "9"},
+                defaultIndex = 1
+            },
+            {
+                key = "depth",
+                name = _("depth"),
+                values = {"2", "4", "6", "8", "10", "12", "16", "24"},
+                defaultIndex = 3
+            },
+            {
+                key = "flow",
+                name = _("flow"),
+                values = {_("angular"), _("smooth")},
+                defaultIndex = 1
+            },
+            {
+                key = "shore",
+                name = _("shore"),
+                values = {_("straight"), _("natural")},
+                defaultIndex = 1
+            },
+            {
+                key = "beach",
+                name = _("beach"),
+                values = {_("green"), _("sand")},
+                defaultIndex = 1
+            },
+            {
+                key = "bed",
+                name = _("bed"),
+                values = {_("green"), _("sand"), _("gravel")},
+                defaultIndex = 0
+            },
+            {
+                key = "cascade",
+                name = _("cascade"),
+                values = {_("yes"), _("no")},
+                defaultIndex = 1
+            },
+            {
+                key = "extend",
+                name = _("extend"),
+                values = {_("none"), _("start"), _("stop"), _("both")},
+                defaultIndex = 0
+            },
+            {
+                key = "snowball_streamer_lock",
+                name = _("snowball_streamer_lock"),
+                values = {
+                    _("snowball_streamer_lock_unlock"),
+                    _("snowball_streamer_lock_lock")
+                },
+                defaultIndex = 0
+            }
+        },
+        updateFn = function(params)
+            local result = {
+                models = {},
+                cost = 10,
+                bulldozeCost = 10,
+                maintenanceCost = 0
+            }
+            local mode = modes[params.mode + 1]
+            local width = params.width + params.width_10 * 10
+            local depth = depths[params.depth + 1]
+            local shore = params.shore
+            local smoothen = params.flow == 1
+            local interactive = params.snowball_streamer_lock == 0
+
+            local built = streamer.updateEntityLists()
+            local markers = streamer.markerStore
+            local finishers = streamer.finisherStore
+            local connectors = streamer.makeConnectors(streamer.connectorStore)
+            local extend = params.extend
+
+            if (width == 0) then
+                width = 1
+            end
+
+            if not built then
+                streamer.lock(interactive)
+            end
+
+            result.models = {}
+            result.terrainAlignmentLists = {
+                {
+                    type = "EQUAL",
+                    faces = {}
+                }
+            }
+
+            if mode == "plan" then
+                for i = 1, #finishers do
+                    local finisher = finishers[i]
+                    game.interface.bulldoze(finisher.id)
+                end
+
+                streamer.finisherStore = {}
+
+                for i = 1, #markers + 1 do
+                    result.models[#result.models + 1] = {
+                        id = "asset/snowball_streamer_marker.mdl",
+                        transf = {1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1}
+                    }
+                end
+
+                if (params.cascade == 0) then
+                    result.models[#result.models + 1] = {
+                        id = "asset/snowball_streamer_cascade_marker.mdl",
+                        transf = {1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1}
+                    }
+                end
+
+                local points = streamer.getPoints(markers, connectors, smoothen, width)
+                local normals = streamer.getNormals(points)
+
+                streamer.setZone(points, normals, width)
+            elseif mode == "reset" then
+                result.models[#result.models + 1] = {
+                    id = "asset/snowball_streamer_finisher.mdl",
+                    transf = {0.01, 0, 0, 0, 0, 0.01, 0, 0, 0, 0, 0.01, 0, 0, 0, 0, 1}
+                }
+
+                game.interface.setZone("streamzone", nil)
+
+                for i = 1, #markers do
+                    local marker = markers[i]
+                    game.interface.bulldoze(marker.id)
+                end
+
+                streamer.markerStore = {}
+            elseif mode == "dig" then
+                local points = streamer.getPoints(markers, connectors, smoothen, width)
+                local normals = streamer.getNormals(points)
+                local outline = streamer.getOutline(points, normals, width)
+
+                result.models[#result.models + 1] = {
+                    id = "asset/snowball_streamer_finisher.mdl",
+                    transf = {1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1}
+                }
+
+                game.interface.setZone("streamzone", nil)
+
+                for i = 1, #markers do
+                    local marker = markers[i]
+                    game.interface.bulldoze(marker.id)
+                end
+
+                streamer.markerStore = {}
+
+                if (not points) or (#points < 2) or (polygon.isSelfIntersecting(outline)) then
+                    return result
+                end
+
+                local widths = {}
+                for i = 1, #points do
+                    if normals[i].snapped then
+                        widths[#widths + 1] = normals[i].length * 2
+                    else
+                        if shore == 1 then
+                            widths[#widths + 1] = width * (1 + math.random() * 0.25 - 0.125)
+                        else
+                            widths[#widths + 1] = width
+                        end
+                    end
+                end
+
+                local stream =
+                    game.interface.buildConstruction(
+                    "asset/snowball_streamer_digger.con",
+                    {
+                        ground = outline,
+                        points = points,
+                        normals = normals,
+                        widths = widths,
+                        depth = depth,
+                        extend = extend,
+                        bed = params.bed,
+                        beach = params.beach
+                    },
+                    {1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1}
+                )
+                if interactive then
+                    local player = game.interface.getPlayer()
+                    game.interface.setPlayer(stream, player)
+                end
+            else
+                error("Streamer: invalid operation ", mode)
+            end
+
+            return result
+        end
+    }
+end

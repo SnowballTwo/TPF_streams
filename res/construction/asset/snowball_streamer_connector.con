@@ -1,0 +1,42 @@
+function data()
+    return {
+        type = "ASSET_DEFAULT",
+        buildMode = "MULTI",
+        categories = {"misc"},
+        availability = {
+            yearFrom = 244,
+            yearTo = 245
+        },
+        description = {
+            name = _("patch_title"),
+            description = _("patch_description")
+        },
+        order = 197720303,
+        skipCollision = true,
+        autoRemovable = false,
+        params = {},
+        updateFn = function(params)
+            local result = {
+                models = {},
+                cost = 10,
+                bulldozeCost = 10,
+                maintenanceCost = 0
+            }
+
+            if (params.type == "left") then
+                result.models[#result.models + 1] = {
+                    id = "asset/snowball_streamer_connector_left.mdl",
+                    transf = {1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1}
+                }
+            else
+                result.models[#result.models + 1] = {
+                    id = "asset/snowball_streamer_connector_right.mdl",
+                    transf = {1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1}
+                }
+            end
+            
+
+            return result
+        end
+    }
+end

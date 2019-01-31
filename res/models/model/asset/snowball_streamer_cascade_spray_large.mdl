@@ -1,0 +1,65 @@
+function data()
+return {
+	boundingInfo = {
+		bbMax = {
+			0.45524099469185, 0.43296000361443, 1.2798190116882, 
+		},
+		bbMin = {
+			-0.45524099469185, -0.43296000361443, 0, 
+		},
+		
+	},
+	collider = {
+		params = {
+			
+		},
+		type = "MESH",
+		
+	},
+	lods = {
+		{
+			animations = {
+				
+			},
+			children = {
+				{
+					id = "asset/rock_2_9_lod_0.msh",
+					transf = {
+						.01, 0, 0, 0, 0, .01, 0, 0, 0, 0, .01, 0, 0, 0, 0, 1,
+					},
+					type = "MESH",
+					
+				}, 
+			},
+			events = {
+				
+			},
+			matConfigs = {
+				{
+					0, 
+				}, 
+			},
+			static = false,
+			visibleFrom = 0,
+			visibleTo = 240,
+			
+		}, 
+	},
+	metadata = {
+		particleSystem = {
+			emitters = { 
+				{
+					position = { 0, 0, 0 },
+					velocity = { 0, 0, 0.5 },
+					color = { .95, .98, 1.0 },
+					frequency = 100,
+					lifeTime = 5,
+					size01 = { 1, 6 },
+					child = 0,
+				},
+			}
+		},		
+	},
+	
+}
+end
